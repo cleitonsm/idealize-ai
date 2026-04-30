@@ -1,0 +1,39 @@
+# Local stack: Angular dev server, FastAPI, ChromaDB.
+# From repo root: docker compose -f infra/compose/docker-compose.yml up --build
+
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    ports:
+      - "8002:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "False"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend.Dockerfile
+    ports:
+      - "8001:8000"
+    env_file:
+      - ../../.env.example
+    environment:
+      APP_ENV: local
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+    depends_on:
+      - chroma
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/frontend.Dockerfile
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+
+volumes:
+  chroma_data: {}

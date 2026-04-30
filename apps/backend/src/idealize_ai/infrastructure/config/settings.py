@@ -1,0 +1,15 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    app_env: str = "local"
+    llm_provider: str = ""
+    llm_api_key: str = ""
+    chroma_host: str = "localhost"
+    chroma_port: int = 8000
+
+
+def get_settings() -> Settings:
+    return Settings()

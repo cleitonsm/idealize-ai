@@ -1,0 +1,12 @@
+**/node_modules
+**/.angular
+**/dist
+.git
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+**/venv
+*.pyc
+.env
+.env.*

@@ -1,0 +1,15 @@
+{
+  "name": "idealize-ai",
+  "private": true,
+  "workspaces": [
+    "apps/frontend",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "start:frontend": "npm run start -w idealize-frontend",
+    "build:frontend": "npm run build -w idealize-frontend",
+    "test:frontend": "npm run test -w idealize-frontend -- --browsers=ChromeHeadless --watch=false",
+    "install:all": "npm install",
+    "test:backend": "cd apps/backend && python -m pytest -q"
+  }
+}
