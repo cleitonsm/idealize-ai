@@ -1,0 +1,21 @@
+@startuml C4_Context_Idealize_AI
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Idealize AI - C4 Contexto
+
+Person(user, "Usuário", "Pessoa que deseja transformar uma ideia de sistema em insumos negociais e técnicos.")
+Person(po, "Product Owner", "Responsável por validar valor, priorizar backlog e revisar requisitos.")
+Person(architect, "Arquiteto de Solução", "Responsável por revisar decisões técnicas, integrações e modelos arquiteturais.")
+
+System(idealize, "Idealize AI", "Copiloto de produto e arquitetura que conduz descoberta, gera artefatos e preserva memória contextual.")
+
+System_Ext(llm, "Provedor LLM", "Serviço externo de IA generativa usado pelos agentes.")
+
+Rel(user, idealize, "Interage com chat, formulários e artefatos")
+Rel(po, idealize, "Revisa épicos, histórias e critérios")
+Rel(architect, idealize, "Revisa stack, arquitetura e diagramas")
+Rel(idealize, llm, "Solicita geração, análise e simulação de papéis", "HTTPS")
+
+@enduml

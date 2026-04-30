@@ -1,0 +1,34 @@
+@startuml C4_Component_Backend_Idealize_AI
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Idealize AI - C4 Componentes Do Backend
+
+Container_Boundary(api, "Backend FastAPI") {
+    Component(http, "API HTTP", "FastAPI routers", "Recebe comandos do frontend e expõe artefatos.")
+    Component(usecases, "Casos de Uso", "Application services", "Conduzem criação de projetos, execução de etapas e geração documental.")
+    Component(domain, "Domínio", "Domain core", "Representa projeto, etapa, insumo, artefato, épico e história.")
+    Component(ports, "Portas", "Interfaces", "Contratos para LLM, RAG, repositórios, orquestração e documentos.")
+    Component(langgraph, "Adaptador LangGraph", "LangGraph", "Executa grafo com nós de PO Agent e Solution Architect Agent.")
+    Component(rag, "Adaptador RAG", "ChromaDB client", "Indexa e recupera insumos por project_id.")
+    Component(repo, "Repositório Em Memória", "In-memory adapter", "Armazena dados transacionais do MVP.")
+    Component(docgen, "Gerador Documental", "Markdown / Mermaid / PlantUML", "Consolida artefatos versionáveis.")
+}
+
+System_Ext(llm, "Provedor LLM", "Serviço externo de IA generativa.")
+ContainerDb(chroma, "ChromaDB", "Vector database", "Memória semântica do projeto.")
+ContainerDb(memorydb, "Banco em Memória", "In-memory store", "Dados transacionais do MVP.")
+
+Rel(http, usecases, "Aciona")
+Rel(usecases, domain, "Manipula")
+Rel(usecases, ports, "Depende de")
+Rel(ports, langgraph, "Implementado por")
+Rel(ports, rag, "Implementado por")
+Rel(ports, repo, "Implementado por")
+Rel(ports, docgen, "Implementado por")
+Rel(langgraph, llm, "Solicita geração e análise", "HTTPS")
+Rel(rag, chroma, "Consulta e grava embeddings")
+Rel(repo, memorydb, "Lê e grava")
+
+@enduml

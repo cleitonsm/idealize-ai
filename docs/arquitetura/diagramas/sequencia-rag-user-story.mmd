@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor Usuario
+    participant Frontend as Frontend Angular
+    participant API as Backend FastAPI
+    participant Graph as LangGraph
+    participant RAG as ChromaDB / RAG
+    participant LLM as Provedor LLM
+
+    Usuario->>Frontend: Informa ideia e responde entrevista
+    Frontend->>API: Envia transcrição da etapa
+    API->>Graph: Executa node_interview
+    Graph->>LLM: Solicita simulação e análise da entrevista
+    LLM-->>Graph: Retorna síntese da entrevista
+    Graph-->>API: Entrega insumo estruturado
+    API->>RAG: Indexa transcrição e síntese com project_id
+
+    Usuario->>Frontend: Solicita geração de User Stories
+    Frontend->>API: Aciona etapa de requisitos
+    API->>RAG: Busca contexto semântico do project_id
+    RAG-->>API: Retorna dores, objetivos e decisões relevantes
+    API->>Graph: Executa node_requirements com contexto
+    Graph->>LLM: Gera épicos, User Stories e critérios de aceite
+    LLM-->>Graph: Retorna backlog estruturado
+    Graph-->>API: Entrega artefatos de requisitos
+    API->>RAG: Indexa requisitos gerados
+    API-->>Frontend: Retorna User Stories fundamentadas
+    Frontend-->>Usuario: Exibe histórias para revisão

@@ -1,0 +1,30 @@
+flowchart TD
+    start([Ideia inicial do usuário])
+    interview[node_interview<br/>Entrevistas simuladas]
+    brainstorm[node_brainstorming<br/>Brainstorming]
+    requirements[node_requirements<br/>Épicos, User Stories e critérios]
+    business[node_business_case<br/>Mercado, concorrentes e modelo]
+    stack[node_stack_definition<br/>Stack e infraestrutura]
+    modeling[node_modeling<br/>Diagramas e modelos técnicos]
+    rag[(RAG / ChromaDB<br/>Memória por project_id)]
+    docs[[Documentos finais]]
+    review{Insumos suficientes?}
+
+    start --> interview
+    interview --> rag
+    interview --> review
+    review -- Não --> interview
+    review -- Sim --> brainstorm
+    brainstorm --> rag
+    brainstorm --> requirements
+    requirements --> rag
+    requirements --> business
+    business --> rag
+    business --> stack
+    stack --> modeling
+    modeling --> rag
+    modeling --> docs
+    rag -. contexto recuperado .-> requirements
+    rag -. contexto recuperado .-> business
+    rag -. contexto recuperado .-> stack
+    rag -. contexto recuperado .-> modeling

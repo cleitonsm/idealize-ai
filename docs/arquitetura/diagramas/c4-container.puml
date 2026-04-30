@@ -1,0 +1,28 @@
+@startuml C4_Container_Idealize_AI
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Idealize AI - C4 Containers
+
+Person(user, "Usuário", "Pessoa que conduz a ideação e revisa artefatos.")
+
+System_Boundary(system, "Idealize AI") {
+    Container(frontend, "Frontend Angular", "Angular", "Interface de chat, formulários, dashboards e visualização de diagramas.")
+    Container(api, "Backend FastAPI", "Python / FastAPI", "APIs, casos de uso, regras de aplicação e coordenação das integrações.")
+    Container(orchestrator, "LangGraph Orchestrator", "LangGraph / LangChain", "Controla o fluxo de estado entre etapas e agentes especializados.")
+    ContainerDb(memorydb, "Banco em Memória", "In-memory store", "Persistência transacional temporária para o MVP.")
+    ContainerDb(chroma, "ChromaDB", "Vector database", "Armazena embeddings e documentos recuperáveis por project_id.")
+}
+
+System_Ext(llm, "Provedor LLM", "Serviço externo de IA generativa.")
+
+Rel(user, frontend, "Usa")
+Rel(frontend, api, "Consome API", "HTTP/JSON")
+Rel(api, orchestrator, "Executa fluxos de descoberta e modelagem")
+Rel(api, memorydb, "Lê e grava dados do MVP")
+Rel(api, chroma, "Indexa e recupera contexto semântico")
+Rel(orchestrator, llm, "Chama modelos para agentes PO e Arquiteto", "HTTPS")
+Rel(orchestrator, chroma, "Consulta contexto de projeto")
+
+@enduml
