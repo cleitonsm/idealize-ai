@@ -5,7 +5,6 @@ from pathlib import Path
 
 from idealize_contracts import ArtifactType, Stage
 
-
 _DEFAULT_STAGE_PROMPTS: dict[Stage, str] = {
     Stage.INTERVIEW: (
         "You are a Product Owner agent. Conduct a concise stakeholder interview synthesis and "

@@ -1,0 +1,55 @@
+{
+  "project": {
+    "name": "Clinica Conecta",
+    "description": "Plataforma para reduzir faltas em consultas e melhorar o acompanhamento de pacientes."
+  },
+  "initialIdea": "Clinicas de pequeno e medio porte perdem receita com faltas e reagendamentos manuais. A solucao proposta e um assistente que confirma consultas, coleta impedimentos, sugere novos horarios e gera indicadores para gestores.",
+  "assumptions": [
+    "Recepcionistas precisam de uma fila unica de confirmacoes.",
+    "Pacientes preferem WhatsApp para lembretes e reagendamentos.",
+    "Gestores precisam enxergar taxa de comparecimento por medico e especialidade."
+  ],
+  "demoArtifacts": [
+    {
+      "stage": "interview",
+      "type": "problem_solution",
+      "title": "Problema e solucao"
+    },
+    {
+      "stage": "brainstorming",
+      "type": "value_proposition",
+      "title": "Proposta de valor"
+    },
+    {
+      "stage": "requirements",
+      "type": "epic",
+      "title": "Epicos do MVP"
+    },
+    {
+      "stage": "requirements",
+      "type": "user_story",
+      "title": "Historias de usuario"
+    },
+    {
+      "stage": "requirements",
+      "type": "acceptance_criteria",
+      "title": "Criterios de aceite"
+    },
+    {
+      "stage": "business_case",
+      "type": "market_analysis",
+      "title": "Analise inicial de mercado"
+    },
+    {
+      "stage": "business_case",
+      "type": "business_model",
+      "title": "Modelo de negocio"
+    },
+    {
+      "stage": "modeling",
+      "type": "diagram_mermaid",
+      "title": "Diagrama de solucao"
+    }
+  ],
+  "mermaidExample": "flowchart LR\n  Paciente --> WhatsApp\n  WhatsApp --> API[FastAPI]\n  API --> Orquestrador[LangGraph]\n  Orquestrador --> LLM\n  API --> RAG[(ChromaDB)]\n  API --> Painel[Angular]"
+}

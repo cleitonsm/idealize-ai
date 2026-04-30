@@ -4,7 +4,11 @@ import hashlib
 from datetime import UTC, datetime
 from typing import Any
 
-from idealize_contracts import ArtifactType, MessageRole, Stage
+from idealize_contracts import (  # type: ignore[import-untyped]
+    ArtifactType,
+    MessageRole,
+    Stage,
+)
 
 from idealize_ai.adapters.outbound.rag.in_memory_rag import InMemoryRag
 from idealize_ai.ports.rag import RagPort
@@ -29,13 +33,15 @@ class ChromaRag(RagPort):
         self._collection = None
         self._enabled = False
         try:
-            import chromadb
+            import chromadb  # type: ignore[import-not-found]
         except Exception:
             return
 
         try:
             client = chromadb.HttpClient(host=host, port=port)
-            self._collection = client.get_or_create_collection(name=collection_name)
+            self._collection = client.get_or_create_collection(
+                name=collection_name
+            )
             self._enabled = True
         except Exception:
             self._collection = None
@@ -68,7 +74,10 @@ class ChromaRag(RagPort):
         if self._enabled and self._collection is not None:
             try:
                 doc_id = hashlib.sha256(
-                    f"{project_id}|{metadata['created_at']}|{clean_text[:200]}".encode("utf-8")
+                    (
+                        f"{project_id}|{metadata['created_at']}|"
+                        f"{clean_text[:200]}"
+                    ).encode()
                 ).hexdigest()
                 self._collection.add(
                     ids=[doc_id],
@@ -88,15 +97,36 @@ class ChromaRag(RagPort):
             extra_metadata=metadata,
         )
 
-    def retrieve_context(self, *, project_id: str, query: str, limit: int = 8) -> str:
+    def retrieve_context(
+        self,
+        *,
+        project_id: str,
+        query: str,
+        limit: int = 8,
+    ) -> str:
         if self._enabled and self._collection is not None:
             try:
-                result = self._collection.get(where={"project_id": project_id}, limit=max(limit, 1))
-                documents = result.get("documents", []) if isinstance(result, dict) else []
-                items = [item.strip() for item in documents if isinstance(item, str) and item.strip()]
+                result = self._collection.get(
+                    where={"project_id": project_id},
+                    limit=max(limit, 1),
+                )
+                documents = (
+                    result.get("documents", [])
+                    if isinstance(result, dict)
+                    else []
+                )
+                items = [
+                    item.strip()
+                    for item in documents
+                    if isinstance(item, str) and item.strip()
+                ]
                 if items:
                     return "\n\n---\n\n".join(items[-limit:])
             except Exception:
                 self._enabled = False
 
-        return self._fallback.retrieve_context(project_id=project_id, query=query, limit=limit)
+        return self._fallback.retrieve_context(
+            project_id=project_id,
+            query=query,
+            limit=limit,
+        )
