@@ -1,0 +1,19 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+from idealize_ai.domain.entities import Artifact, Message, Project
+
+
+class ProjectRepository(Protocol):
+    def save_project(self, project: Project) -> None: ...
+
+    def get_project(self, project_id: str) -> Project | None: ...
+
+    def add_message(self, message: Message) -> None: ...
+
+    def list_messages(self, project_id: str) -> list[Message]: ...
+
+    def add_artifact(self, artifact: Artifact) -> None: ...
+
+    def list_artifacts(self, project_id: str) -> list[Artifact]: ...
