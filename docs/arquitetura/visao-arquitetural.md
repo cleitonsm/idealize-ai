@@ -2,7 +2,7 @@
 
 ## Contexto
 
-Esta documentação descreve uma arquitetura proposta para o MVP do Idealize AI. O repositório ainda não possui implementação de aplicação, portanto as decisões aqui registradas funcionam como referência inicial para desenvolvimento futuro.
+Esta documentação descreve a arquitetura do MVP funcional do Idealize AI. A aplicação passa a validar o fluxo ponta a ponta com frontend Angular, backend FastAPI, memória RAG e persistência local suficiente para demonstração.
 
 ## Modelo Arquitetural Proposto
 
@@ -33,7 +33,7 @@ flowchart LR
     Agents --> LLM[LLM Provider]
     UseCases --> RAG[Memory and RAG Port]
     RAG --> ChromaDB[ChromaDB]
-    UseCases --> MemoryDB[InMemory DB MVP]
+    UseCases --> SQLite[(SQLite MVP)]
 ```
 
 ## Princípios
@@ -41,5 +41,5 @@ flowchart LR
 - O domínio não deve conhecer FastAPI, LangGraph, ChromaDB ou provedores LLM.
 - Os casos de uso coordenam intenções de negócio e dependem de portas, não de implementações concretas.
 - A orquestração com LangGraph deve ser encapsulada por adaptadores ou serviços de aplicação.
-- O banco em memória atende ao MVP, mas deve ser substituível por PostgreSQL sem alterar o domínio.
+- O SQLite atende ao MVP funcional local, mas deve ser substituível por PostgreSQL sem alterar o domínio.
 - A memória RAG deve manter rastreabilidade por projeto para fundamentar gerações futuras.

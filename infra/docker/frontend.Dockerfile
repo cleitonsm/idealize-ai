@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 
-RUN npm ci
+RUN npm ci && npm install --no-save @rollup/rollup-linux-x64-gnu
 
 COPY apps/frontend apps/frontend
 COPY packages/contracts packages/contracts

@@ -20,6 +20,7 @@ from idealize_ai.application.use_cases import (
     get_project,
     get_project_history,
     list_artifacts,
+    list_projects,
     register_initial_idea,
 )
 from idealize_ai.domain.stage_flow import next_stage
@@ -82,6 +83,12 @@ def create_project_route(
         CreateProjectInput(name=name, description=body.description),
     )
     return project_to_contract(project)
+
+
+@router.get("", response_model=list[Project])
+def list_projects_route(request: Request) -> list[Project]:
+    projects = list_projects(_repo(request))
+    return [project_to_contract(project) for project in projects]
 
 
 @router.get("/{project_id}", response_model=Project)

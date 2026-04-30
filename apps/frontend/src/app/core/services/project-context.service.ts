@@ -1,74 +1,20 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, inject, signal } from '@angular/core';
 
-import type { Artifact, Project, Stage } from '@idealize-ai/contracts';
+import type { Artifact, ArtifactType, Message, Project, Stage } from '@idealize-ai/contracts';
+import { forkJoin } from 'rxjs';
 
-function iso(d: Date): string {
-  return d.toISOString();
-}
+import { ProjectApiService } from './project-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectContextService {
-  private readonly seed = new Date('2026-04-01T12:00:00.000Z');
+  private readonly api = inject(ProjectApiService);
 
-  readonly projects = signal<Project[]>([
-    {
-      id: 'demo-retail',
-      name: 'Programa de fidelidade B2C',
-      description: 'App para pontos, níveis e parcerias locais.',
-      currentStage: 'interview',
-      createdAt: iso(this.seed),
-      updatedAt: iso(this.seed),
-    },
-    {
-      id: 'demo-internal',
-      name: 'Portal interno de demandas',
-      description: 'Centralizar solicitações de áreas e priorização.',
-      currentStage: 'initial_idea',
-      createdAt: iso(new Date(this.seed.getTime() - 86400000)),
-      updatedAt: iso(new Date(this.seed.getTime() - 86400000)),
-    },
-  ]);
-
-  /** Sample artifacts for demo project — replaced by API later. */
-  readonly artifacts = signal<Artifact[]>([
-    {
-      id: 'a1',
-      projectId: 'demo-retail',
-      type: 'problem_solution',
-      title: 'Problema e solução (rascunho)',
-      content:
-        '**Problema:** Clientes não retêm motivação para compras recorrentes.\n\n**Solução:** Programa de pontos com metas semanais.',
-      stage: 'initial_idea',
-      status: 'draft',
-      createdAt: iso(this.seed),
-      updatedAt: iso(this.seed),
-    },
-    {
-      id: 'a2',
-      projectId: 'demo-retail',
-      type: 'value_proposition',
-      title: 'Proposta de valor',
-      content: 'Recompensas imediatas e parcerias próximas ao cliente.',
-      stage: 'brainstorming',
-      status: 'generated',
-      sourceContext: 'Sumário da sessão de brainstorming (mock).',
-      createdAt: iso(this.seed),
-      updatedAt: iso(this.seed),
-    },
-    {
-      id: 'a3',
-      projectId: 'demo-internal',
-      type: 'user_story',
-      title: 'Abrir solicitação',
-      content: 'Como colaborador, quero registrar uma demanda para acompanhamento.',
-      stage: 'requirements',
-      status: 'needs_input',
-      createdAt: iso(this.seed),
-      updatedAt: iso(this.seed),
-    },
-  ]);
-
-  readonly activeProjectId = signal<string | null>('demo-retail');
+  readonly projects = signal<Project[]>([]);
+  readonly artifacts = signal<Artifact[]>([]);
+  readonly history = signal<Message[]>([]);
+  readonly activeProjectId = signal<string | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   readonly activeProject = computed(() => {
     const id = this.activeProjectId();
@@ -86,40 +32,166 @@ export class ProjectContextService {
     return this.artifacts().filter((a) => a.projectId === id);
   });
 
+  constructor() {
+    this.loadProjects();
+  }
+
+  loadProjects(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.listProjects().subscribe({
+      next: (projects) => {
+        this.projects.set(projects);
+        const currentId = this.activeProjectId();
+        const nextActive = currentId && projects.some((p) => p.id === currentId)
+          ? currentId
+          : projects[0]?.id ?? null;
+        this.activeProjectId.set(nextActive);
+        if (nextActive) {
+          this.loadProjectDetails(nextActive);
+        } else {
+          this.artifacts.set([]);
+          this.history.set([]);
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Não foi possível carregar os projetos.');
+      },
+      complete: () => this.loading.set(false),
+    });
+  }
+
   selectProject(id: string): void {
     const exists = this.projects().some((p) => p.id === id);
     this.activeProjectId.set(exists ? id : null);
+    if (exists) {
+      this.loadProjectDetails(id);
+    } else {
+      this.artifacts.set([]);
+      this.history.set([]);
+    }
   }
 
-  createProject(name: string, description?: string): Project {
-    const now = iso(new Date());
-    const project: Project = {
-      id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `proj-${Date.now()}`,
-      name: name.trim(),
-      description: description?.trim() || undefined,
-      currentStage: 'initial_idea',
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.projects.update((list) => [...list, project]);
-    this.activeProjectId.set(project.id);
-    return project;
+  createProject(name: string, description?: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.createProject(name.trim(), description?.trim() || undefined).subscribe({
+      next: (project) => {
+        this.upsertProject(project);
+        this.activeProjectId.set(project.id);
+        this.artifacts.set([]);
+        this.history.set([]);
+      },
+      error: () => {
+        this.error.set('Não foi possível criar o projeto.');
+      },
+      complete: () => this.loading.set(false),
+    });
   }
 
   setStageForActiveProject(stage: Stage): void {
+    this.advanceActiveProject(stage);
+  }
+
+  advanceActiveProject(targetStage?: Stage): void {
     const id = this.activeProjectId();
     if (!id) {
       return;
     }
-    const now = iso(new Date());
-    this.projects.update((list) =>
-      list.map((p) =>
-        p.id === id ? { ...p, currentStage: stage, updatedAt: now } : p,
-      ),
-    );
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.advanceProject(id, targetStage).subscribe({
+      next: (project) => this.upsertProject(project),
+      error: () => {
+        this.error.set('Não foi possível avançar a etapa do projeto.');
+      },
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  registerIdea(content: string): void {
+    const id = this.activeProjectId();
+    if (!id) {
+      return;
+    }
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.registerIdea(id, content.trim()).subscribe({
+      next: ({ project, message }) => {
+        this.upsertProject(project);
+        this.history.update((items) => [...items, message].sort(byCreatedAt));
+      },
+      error: () => {
+        this.error.set('Não foi possível registrar a mensagem.');
+      },
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  generateArtifact(type: ArtifactType, title?: string): void {
+    const id = this.activeProjectId();
+    if (!id) {
+      return;
+    }
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.generateArtifact(id, type, title?.trim() || undefined).subscribe({
+      next: (artifact) => {
+        this.addArtifact(artifact);
+        this.loadProject(id);
+      },
+      error: () => {
+        this.error.set('Não foi possível gerar o artefato.');
+      },
+      complete: () => this.loading.set(false),
+    });
   }
 
   addArtifact(artifact: Artifact): void {
-    this.artifacts.update((list) => [...list, artifact]);
+    this.artifacts.update((list) =>
+      [...list.filter((item) => item.id !== artifact.id), artifact].sort(byCreatedAt),
+    );
   }
+
+  private loadProjectDetails(projectId: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+    forkJoin({
+      project: this.api.getProject(projectId),
+      artifacts: this.api.listArtifacts(projectId),
+      history: this.api.listHistory(projectId),
+    }).subscribe({
+      next: ({ project, artifacts, history }) => {
+        this.upsertProject(project);
+        this.artifacts.set(artifacts);
+        this.history.set(history);
+      },
+      error: () => {
+        this.error.set('Não foi possível carregar os dados do projeto.');
+      },
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  private loadProject(projectId: string): void {
+    this.api.getProject(projectId).subscribe({
+      next: (project) => this.upsertProject(project),
+    });
+  }
+
+  private upsertProject(project: Project): void {
+    this.projects.update((list) => {
+      const withoutCurrent = list.filter((item) => item.id !== project.id);
+      return [project, ...withoutCurrent].sort(byUpdatedAtDesc);
+    });
+  }
+}
+
+function byCreatedAt(a: { createdAt: string }, b: { createdAt: string }): number {
+  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+}
+
+function byUpdatedAtDesc(a: Project, b: Project): number {
+  return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
 }

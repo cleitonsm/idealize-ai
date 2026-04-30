@@ -21,14 +21,14 @@ export class UiButtonComponent {
 
   readonly buttonClasses = computed(() => {
     const base =
-      'inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+      'inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
     switch (this.variant()) {
       case 'primary':
-        return `${base} bg-primary-600 text-white hover:bg-primary-700`;
+        return `${base} bg-primary-600 text-white shadow-sm shadow-primary-600/20 hover:bg-primary-700`;
       case 'secondary':
-        return `${base} border border-border bg-white text-slate-900 shadow-sm hover:bg-slate-50`;
+        return `${base} bg-white text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50`;
       default:
-        return `${base} text-primary-800 hover:bg-primary-50`;
+        return `${base} text-primary-700 hover:bg-primary-50`;
     }
   });
 }

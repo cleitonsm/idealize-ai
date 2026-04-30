@@ -18,6 +18,10 @@ def test_mvp_project_flow(client):  # noqa: ANN001
     assert project["name"] == "ACME"
     assert project["currentStage"] == "initial_idea"
 
+    r = client.get("/projects")
+    assert r.status_code == 200
+    assert [p["id"] for p in r.json()] == [pid]
+
     r = client.post(
         f"/projects/{pid}/idea",
         json={"content": "  Build a thing  "},

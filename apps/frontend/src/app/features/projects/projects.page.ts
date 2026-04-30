@@ -24,9 +24,22 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
     EmptyStateComponent,
   ],
   template: `
-    <div class="mx-auto flex max-w-5xl flex-col gap-6 lg:flex-row">
-      <div class="min-w-0 flex-1 space-y-4">
-        <app-ui-card title="Novo projeto" subtitle="Cria um projeto e define-o como ativo no shell.">
+    <div class="mx-auto flex max-w-7xl flex-col gap-6">
+      <div class="overflow-hidden rounded-3xl bg-slate-950 shadow-xl ring-1 ring-white/10">
+        <div class="bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.35),transparent_35%)] px-6 py-8 sm:px-8">
+          <p class="text-sm font-semibold uppercase tracking-wide text-primary-200">Projetos</p>
+          <h2 class="mt-2 max-w-2xl text-3xl font-semibold tracking-tight text-white">
+            Transforme ideias soltas em uma jornada de discovery revisável.
+          </h2>
+          <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+            Crie o projeto, selecione o foco ativo e acompanhe os artefatos que serão refinados ao longo do MVP.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-6 lg:flex-row">
+      <div class="min-w-0 flex-1 space-y-6">
+        <app-ui-card title="Novo projeto" subtitle="Cria um projeto na API e define-o como ativo no shell.">
           <div class="flex flex-col gap-4">
             <app-ui-input
               label="Nome"
@@ -41,40 +54,54 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
               [value]="newDescription()"
               (valueChange)="newDescription.set($event)"
             />
-            <app-ui-button type="button" (clicked)="create()" [disabled]="!canSubmit()">
+            <app-ui-button type="button" (clicked)="create()" [disabled]="!canSubmit() || projects.loading()">
               Criar projeto
             </app-ui-button>
+            @if (projects.error(); as error) {
+              <p class="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800 ring-1 ring-rose-100">{{ error }}</p>
+            }
           </div>
         </app-ui-card>
 
         <app-ui-card title="Seus projetos" subtitle="Selecione qual projeto está em foco.">
-          <ul class="flex flex-col gap-3" role="list">
+          @if (projects.loading() && projects.projects().length === 0) {
+            <p class="text-sm text-slate-500">Carregando projetos...</p>
+          } @else if (projects.projects().length === 0) {
+            <app-empty-state
+              title="Nenhum projeto criado"
+              description="Crie o primeiro projeto para iniciar o discovery."
+            />
+          } @else {
+            <ul class="flex flex-col gap-3" role="list">
             @for (project of projects.projects(); track project.id) {
               <li>
                 <button
                   type="button"
-                  class="flex w-full flex-col gap-1 rounded-xl border px-4 py-3 text-left transition hover:border-primary-200 hover:bg-primary-50/40"
+                  class="flex w-full flex-col gap-2 rounded-2xl bg-white px-4 py-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-primary-200"
                   [ngClass]="{
-                    'border-primary-300': projects.activeProjectId() === project.id,
-                    'bg-primary-50/30': projects.activeProjectId() === project.id,
+                    'ring-primary-300': projects.activeProjectId() === project.id,
+                    'bg-primary-50/40': projects.activeProjectId() === project.id,
                   }"
                   (click)="select(project)"
                 >
-                  <span class="text-sm font-semibold text-slate-900">{{ project.name }}</span>
-                  <span class="text-xs text-slate-500">
-                    Etapa: {{ stageLabel(project.currentStage) }}
+                  <span class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-semibold text-slate-950">{{ project.name }}</span>
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      {{ stageLabel(project.currentStage) }}
+                    </span>
                   </span>
                   @if (project.description) {
-                    <span class="line-clamp-2 text-sm text-slate-600">{{ project.description }}</span>
+                    <span class="line-clamp-2 text-sm leading-6 text-slate-600">{{ project.description }}</span>
                   }
                 </button>
               </li>
             }
-          </ul>
+            </ul>
+          }
         </app-ui-card>
       </div>
-      <aside class="w-full shrink-0 space-y-3 lg:w-80">
-        <app-ui-card title="Pré-visualização" subtitle="Artefatos do projeto ativo (mock).">
+      <aside class="w-full shrink-0 space-y-4 lg:w-96">
+        <app-ui-card title="Pré-visualização" subtitle="Artefatos do projeto ativo vindos da API.">
           @if (projects.artifactsForActiveProject().length === 0) {
             <app-empty-state
               title="Sem artefatos ainda"
@@ -88,7 +115,21 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
             </div>
           }
         </app-ui-card>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <p class="text-sm font-semibold text-slate-950">Resumo do projeto ativo</p>
+          <dl class="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Projetos</dt>
+              <dd class="mt-1 text-2xl font-semibold text-slate-950">{{ projects.projects().length }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Artefatos</dt>
+              <dd class="mt-1 text-2xl font-semibold text-slate-950">{{ projects.artifactsForActiveProject().length }}</dd>
+            </div>
+          </dl>
+        </div>
       </aside>
+      </div>
     </div>
   `,
 })

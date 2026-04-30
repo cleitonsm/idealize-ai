@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
   selector: 'app-loading-state',
   template: `
     <div
-      class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-white/80 px-6 py-12 text-center"
+      class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/90 px-6 py-12 text-center shadow-sm"
       role="status"
       aria-live="polite"
     >

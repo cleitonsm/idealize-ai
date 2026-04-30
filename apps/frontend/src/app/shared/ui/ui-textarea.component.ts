@@ -5,11 +5,11 @@ import { Component, input, model } from '@angular/core';
   template: `
     <div class="flex flex-col gap-1.5">
       @if (label()) {
-        <label class="text-sm font-medium text-slate-700" [attr.for]="fieldId">{{ label() }}</label>
+        <label class="text-sm font-medium leading-6 text-slate-900" [attr.for]="fieldId">{{ label() }}</label>
       }
       <textarea
         [id]="fieldId"
-        class="min-h-[120px] w-full resize-y rounded-lg border border-border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+        class="block min-h-[120px] w-full resize-y rounded-xl border-0 bg-white px-3.5 py-2.5 text-sm leading-6 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 transition focus:ring-2 focus:ring-inset focus:ring-primary-600 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
         [attr.rows]="rows()"
         [placeholder]="placeholder()"
         [disabled]="disabled()"
@@ -17,7 +17,7 @@ import { Component, input, model } from '@angular/core';
         (input)="value.set($any($event.target).value)"
       ></textarea>
       @if (hint()) {
-        <p class="text-xs text-slate-500">{{ hint() }}</p>
+        <p class="text-xs leading-5 text-slate-500">{{ hint() }}</p>
       }
     </div>
   `,

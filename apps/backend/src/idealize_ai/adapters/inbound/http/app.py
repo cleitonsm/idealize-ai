@@ -12,6 +12,9 @@ from idealize_ai.adapters.outbound.llm.configurable_llm import ConfigurableLlm
 from idealize_ai.adapters.outbound.persistence.in_memory_project_repository import (
     InMemoryProjectRepository,
 )
+from idealize_ai.adapters.outbound.persistence.sqlite_project_repository import (
+    SqliteProjectRepository,
+)
 from idealize_ai.adapters.outbound.rag.in_memory_rag import InMemoryRag
 from idealize_ai.adapters.outbound.rag_chroma.chroma_rag import ChromaRag
 from idealize_ai.application.prompts import StagePromptRegistry
@@ -38,7 +41,7 @@ def create_app(
     orchestrator = LangGraphOrchestrator(llm=llm)
     prompt_registry = StagePromptRegistry(prompts_dir=settings.prompts_dir or None)
 
-    app.state.repository = repository or InMemoryProjectRepository()
+    app.state.repository = repository or _default_repository(settings.sqlite_database_path)
     app.state.rag = rag or ChromaRag(
         host=settings.chroma_host,
         port=settings.chroma_port,
@@ -82,3 +85,9 @@ def create_app(
     app.include_router(health.router, tags=["health"])
     app.include_router(projects.router, prefix="/projects", tags=["projects"])
     return app
+
+
+def _default_repository(database_path: str) -> ProjectRepository:
+    if database_path == ":memory:":
+        return InMemoryProjectRepository()
+    return SqliteProjectRepository(database_path)

@@ -7,7 +7,8 @@ import { stageLabel as labelForStage } from '../../core/stage-labels';
 @Component({
   selector: 'app-stage-badge',
   template: `
-    <span [class]="badgeClasses()" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset">
+    <span [class]="badgeClasses()" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset">
+      <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
       {{ displayLabel() }}
     </span>
   `,

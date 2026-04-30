@@ -10,20 +10,16 @@ import { STAGE_ORDER, stageIndex, stageLabel } from '../../core/stage-labels';
   imports: [NgClass],
   template: `
     <div
-      class="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
+      class="no-scrollbar flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
       role="list"
       aria-label="Etapas do fluxo guiado"
     >
       @for (stage of STAGE_ORDER; track stage; let i = $index) {
         <div
-          class="flex min-w-[168px] flex-1 flex-col rounded-xl border px-3 py-3 shadow-sm transition"
+          class="flex min-w-[168px] flex-1 flex-col rounded-2xl px-4 py-4 shadow-sm ring-1 transition"
           [ngClass]="{
-            'border-primary-300': isCurrent(stage),
-            'bg-primary-50/50': isCurrent(stage),
-            'ring-1': isCurrent(stage),
-            'ring-primary-200': isCurrent(stage),
-            'border-border': !isCurrent(stage),
-            'bg-white': !isCurrent(stage),
+            'bg-primary-50 ring-primary-200': isCurrent(stage),
+            'bg-white ring-slate-200': !isCurrent(stage),
           }"
           role="listitem"
         >
@@ -37,11 +33,11 @@ import { STAGE_ORDER, stageIndex, stageLabel } from '../../core/stage-labels';
             <p class="text-sm font-semibold leading-snug text-slate-900">{{ label(stage) }}</p>
           </div>
           @if (isCurrent(stage)) {
-            <p class="mt-2 text-xs font-medium text-primary-800">Etapa atual</p>
+            <p class="mt-3 text-xs font-semibold text-primary-800">Etapa atual</p>
           } @else if (isDone(stage)) {
-            <p class="mt-2 text-xs text-emerald-700">Concluída</p>
+            <p class="mt-3 text-xs font-medium text-emerald-700">Concluída</p>
           } @else {
-            <p class="mt-2 text-xs text-slate-500">Pendente</p>
+            <p class="mt-3 text-xs font-medium text-slate-500">Pendente</p>
           }
         </div>
       }

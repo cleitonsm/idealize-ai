@@ -10,9 +10,12 @@ from idealize_ai.adapters.outbound.generation.traceable_document_generator impor
 from idealize_ai.adapters.outbound.persistence.in_memory_project_repository import (
     InMemoryProjectRepository,
 )
+from idealize_ai.adapters.outbound.persistence.sqlite_project_repository import (
+    SqliteProjectRepository,
+)
 from idealize_ai.adapters.outbound.rag.in_memory_rag import InMemoryRag
 from idealize_ai.application.prompts import StagePromptRegistry
-from idealize_ai.domain.entities import Artifact, Project
+from idealize_ai.domain.entities import Artifact, Message, Project
 
 
 class FakeOrchestrator:
@@ -105,6 +108,53 @@ def test_repository_lists_artifacts_by_creation_time() -> None:
     repo.add_artifact(older)
 
     assert [a.id for a in repo.list_artifacts("p1")] == ["a1", "a2"]
+
+
+def test_sqlite_repository_persists_projects_messages_and_artifacts(tmp_path) -> None:  # noqa: ANN001
+    database_path = tmp_path / "idealize.sqlite3"
+    now = datetime.now(UTC).replace(tzinfo=None)
+    project = Project(
+        id="p1",
+        name="Demo",
+        description="Persisted",
+        current_stage=Stage.INTERVIEW,
+        created_at=now,
+        updated_at=now,
+    )
+    message = Message(
+        id="m1",
+        project_id="p1",
+        role=MessageRole.USER,
+        content="Uma ideia inicial",
+        stage=Stage.INTERVIEW,
+        created_at=now,
+        metadata={"source": "test"},
+    )
+    artifact = Artifact(
+        id="a1",
+        project_id="p1",
+        type=ArtifactType.PROBLEM_SOLUTION,
+        title="Problema e solução",
+        content="conteudo",
+        stage=Stage.INTERVIEW,
+        status=ArtifactStatus.GENERATED,
+        source_context="contexto",
+        created_at=now,
+        updated_at=now,
+        metadata={"trace": {"node": "node_interview"}},
+    )
+
+    repo = SqliteProjectRepository(database_path)
+    repo.save_project(project)
+    repo.add_message(message)
+    repo.add_artifact(artifact)
+
+    restored = SqliteProjectRepository(database_path)
+
+    assert restored.get_project("p1") == project
+    assert restored.list_projects() == [project]
+    assert restored.list_messages("p1") == [message]
+    assert restored.list_artifacts("p1") == [artifact]
 
 
 def test_traceable_document_generator_records_prompt_and_node_trace() -> None:

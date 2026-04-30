@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     chroma_host: str = "localhost"
     chroma_port: int = 8000
     chroma_collection: str = "idealize-ai-context"
+    sqlite_database_path: str = "data/idealize-ai.sqlite3"
 
 
 def get_settings() -> Settings:

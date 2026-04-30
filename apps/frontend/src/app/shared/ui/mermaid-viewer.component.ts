@@ -5,14 +5,14 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 @Component({
   selector: 'app-mermaid-viewer',
   template: `
-    <div class="rounded-xl border border-border bg-white shadow-sm">
+    <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
       @if (svgHtml(); as safe) {
         <div
-          class="mermaid-host min-h-[80px] overflow-x-auto p-4 [&_svg]:mx-auto [&_svg]:max-w-full"
+          class="mermaid-host min-h-[80px] overflow-x-auto p-6"
           [innerHTML]="safe"
         ></div>
       } @else {
-        <div class="p-6 text-center text-sm text-slate-500" aria-busy="true">Gerando diagrama…</div>
+        <div class="p-8 text-center text-sm text-slate-500" aria-busy="true">Gerando diagrama…</div>
       }
     </div>
   `,

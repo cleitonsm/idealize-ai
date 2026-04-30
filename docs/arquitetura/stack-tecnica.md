@@ -2,7 +2,7 @@
 
 ## Status Da Stack
 
-A stack descrita neste documento é uma proposta para o MVP. O repositório ainda não possui código de aplicação, configurações Docker ou dependências instaladas.
+A stack descrita neste documento sustenta a versão funcional do MVP, com frontend Angular, backend FastAPI, ChromaDB para RAG e persistência transacional local em SQLite.
 
 ## Frontend
 
@@ -22,7 +22,7 @@ ChromaDB é a vector store proposta para o MVP. Ela deve armazenar transcriçõe
 
 ## Persistência Transacional
 
-No MVP, o banco transacional pode ser em memória para simplificar a validação do fluxo. A arquitetura deve preservar uma porta de repositório para permitir migração futura para PostgreSQL sem alterar os casos de uso centrais.
+No MVP funcional, o banco transacional padrão é SQLite local para preservar projetos, mensagens e artefatos entre reinícios. A arquitetura preserva uma porta de repositório para permitir migração futura para PostgreSQL sem alterar os casos de uso centrais. O repositório em memória permanece útil para testes automatizados.
 
 ## Ambiente
 

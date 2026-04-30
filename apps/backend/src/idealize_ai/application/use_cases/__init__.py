@@ -55,6 +55,10 @@ def get_project(repo: ProjectRepository, project_id: str) -> Project:
     return project
 
 
+def list_projects(repo: ProjectRepository) -> list[Project]:
+    return repo.list_projects()
+
+
 @dataclass(frozen=True)
 class RegisterInitialIdeaInput:
     project_id: str
@@ -238,5 +242,6 @@ __all__ = [
     "get_project",
     "get_project_history",
     "list_artifacts",
+    "list_projects",
     "register_initial_idea",
 ]

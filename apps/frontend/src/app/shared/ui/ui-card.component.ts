@@ -4,16 +4,16 @@ import { Component, input } from '@angular/core';
   selector: 'app-ui-card',
   template: `
     <section
-      class="rounded-xl border border-border bg-white shadow-sm"
+      class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md"
       [class]="paddingClass()"
     >
       @if (title() || subtitle()) {
-        <header class="border-b border-border px-5 py-4">
+        <header class="border-b border-slate-200 px-6 py-5">
           @if (title()) {
-            <h2 class="text-base font-semibold text-slate-900">{{ title() }}</h2>
+            <h2 class="text-base font-semibold leading-7 text-slate-950">{{ title() }}</h2>
           }
           @if (subtitle()) {
-            <p class="mt-1 text-sm text-slate-600">{{ subtitle() }}</p>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-500">{{ subtitle() }}</p>
           }
         </header>
       }
@@ -30,5 +30,5 @@ export class UiCardComponent {
   readonly padded = input(true);
 
   readonly paddingClass = input('overflow-hidden');
-  readonly bodyPaddingClass = input('px-5 py-5');
+  readonly bodyPaddingClass = input('px-6 py-6');
 }

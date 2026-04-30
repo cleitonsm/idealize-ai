@@ -20,6 +20,13 @@ class InMemoryProjectRepository(ProjectRepository):
     def get_project(self, project_id: str) -> Project | None:
         return self._projects.get(project_id)
 
+    def list_projects(self) -> list[Project]:
+        return sorted(
+            self._projects.values(),
+            key=lambda p: p.updated_at,
+            reverse=True,
+        )
+
     def add_message(self, message: Message) -> None:
         self._messages[message.project_id].append(message)
 

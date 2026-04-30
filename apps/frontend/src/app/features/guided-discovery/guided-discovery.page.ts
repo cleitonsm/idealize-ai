@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import type { Stage } from '@idealize-ai/contracts';
 
@@ -23,10 +23,25 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
   ],
   template: `
     @if (projects.activeProject(); as project) {
-      <div class="mx-auto flex max-w-4xl flex-col gap-6">
+      <div class="mx-auto flex max-w-6xl flex-col gap-6">
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Descoberta guiada</p>
+              <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                Capture contexto, avance etapas e preserve a trilha de decisão.
+              </h2>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                A experiência abaixo registra mensagens na API e usa o estágio persistido do projeto.
+              </p>
+            </div>
+            <app-stage-badge [stage]="project.currentStage" />
+          </div>
+        </div>
+
         <app-ui-card
           title="Progresso"
-          subtitle="Etapas previstas no MVP — estado sincronizado com o projeto ativo (mock)."
+          subtitle="Etapas previstas no MVP, sincronizadas com o backend."
         >
           <app-stage-timeline [currentStage]="project.currentStage" />
         </app-ui-card>
@@ -35,7 +50,7 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
           <app-ui-card
             class="lg:col-span-2"
             title="Ideia inicial"
-            subtitle="Capture o contexto em texto livre; na integração com a API isto alimentará o grafo."
+            subtitle="Capture o contexto em texto livre para alimentar o histórico do projeto."
           >
             <div class="flex flex-col gap-3">
               <div class="flex items-center justify-between gap-2">
@@ -49,8 +64,8 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
                 [value]="ideaDraft()"
                 (valueChange)="ideaDraft.set($event)"
               />
-              <app-ui-button variant="secondary" type="button" (clicked)="stashIdea()">
-                Guardar rascunho localmente
+              <app-ui-button variant="secondary" type="button" (clicked)="stashIdea()" [disabled]="projects.loading()">
+                Registrar ideia
               </app-ui-button>
             </div>
           </app-ui-card>
@@ -58,10 +73,16 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
           <app-ui-card
             class="lg:col-span-3"
             title="Conversa por etapa"
-            subtitle="Histórico simulado — substituído por mensagens reais ao conectar o backend."
+            subtitle="Histórico real registrado no backend."
           >
             <div class="flex max-h-[420px] flex-col gap-3 overflow-y-auto rounded-lg bg-slate-50/80 p-3 ring-1 ring-slate-100">
-              @for (m of chatPreview(); track m.id) {
+              @if (projects.history().length === 0) {
+                <app-empty-state
+                  title="Sem mensagens ainda"
+                  description="Registre a ideia inicial ou envie uma mensagem para começar o histórico."
+                />
+              }
+              @for (m of projects.history(); track m.id) {
                 <div
                   class="flex flex-col gap-1 rounded-lg px-3 py-2 text-sm shadow-sm"
                   [class.ml-8]="m.role === 'assistant'"
@@ -72,31 +93,35 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
                   [class.text-white]="m.role === 'user'"
                 >
                   <span class="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-                    {{ m.role === 'user' ? 'Você' : 'Assistente' }} · {{ stageLabel(m.stage) }}
+                    {{ m.role === 'user' ? 'Você' : 'Assistente' }} · {{ m.stage ? stageLabel(m.stage) : 'Sem etapa' }}
                   </span>
-                  <p class="whitespace-pre-wrap">{{ m.text }}</p>
+                  <p class="whitespace-pre-wrap">{{ m.content }}</p>
                 </div>
               }
             </div>
             <div class="mt-4 flex flex-col gap-2">
               <app-ui-textarea
-                label="Próxima mensagem (simulação)"
-                placeholder="Experimente enviar uma resposta — apenas UI por enquanto."
+                label="Próxima mensagem"
+                placeholder="Envie uma nova resposta para o histórico do projeto."
                 [rows]="3"
                 [value]="composer()"
                 (valueChange)="composer.set($event)"
               />
-              <app-ui-button type="button" (clicked)="sendSimulated()">Enviar</app-ui-button>
+              <div class="flex justify-end">
+                <app-ui-button type="button" (clicked)="sendMessage()" [disabled]="projects.loading()">Enviar</app-ui-button>
+              </div>
             </div>
           </app-ui-card>
         </div>
 
-        <app-ui-card title="Avançar etapa (demonstração)" subtitle="Atualiza o estágio do projeto ativo.">
+        <app-ui-card title="Avançar etapa" subtitle="Solicita ao backend a próxima etapa válida do projeto.">
           <div class="flex flex-wrap gap-2">
-            @for (s of STAGE_ORDER; track s) {
-              <app-ui-button variant="ghost" type="button" (clicked)="goToStage(s)">
-                {{ stageLabel(s) }}
+            @if (nextStage(); as stage) {
+              <app-ui-button variant="ghost" type="button" (clicked)="goToNextStage()" [disabled]="projects.loading()">
+                Avançar para {{ stageLabel(stage) }}
               </app-ui-button>
+            } @else {
+              <p class="text-sm text-slate-500">O projeto já está na etapa final.</p>
             }
           </div>
         </app-ui-card>
@@ -112,57 +137,39 @@ import { UiTextareaComponent } from '../../shared/ui/ui-textarea.component';
 export class GuidedDiscoveryPage {
   protected readonly projects = inject(ProjectContextService);
 
-  protected readonly STAGE_ORDER = STAGE_ORDER;
   protected readonly stageLabel = stageLabel;
 
   protected readonly ideaDraft = signal('');
   protected readonly composer = signal('');
 
-  protected readonly chatPreview = signal<
-    { id: string; role: 'user' | 'assistant'; stage: Stage; text: string }[]
-  >([
-    {
-      id: '1',
-      role: 'assistant',
-      stage: 'initial_idea',
-      text: 'Vamos clarificar a ideia: qual dor você observa hoje e quem sofre com ela?',
-    },
-  ]);
+  protected readonly nextStage = computed<Stage | null>(() => {
+    const current = this.projects.activeProject()?.currentStage;
+    if (!current) {
+      return null;
+    }
+    const nextIndex = STAGE_ORDER.indexOf(current) + 1;
+    return STAGE_ORDER[nextIndex] ?? null;
+  });
 
   protected stashIdea(): void {
-    // Placeholder: future persistence via API
-    this.ideaDraft.update((t) => t);
+    const text = this.ideaDraft().trim();
+    if (!text) {
+      return;
+    }
+    this.projects.registerIdea(text);
+    this.ideaDraft.set('');
   }
 
-  protected sendSimulated(): void {
+  protected sendMessage(): void {
     const text = this.composer().trim();
     if (!text) {
       return;
     }
-    const active = this.projects.activeProject();
-    if (!active) {
-      return;
-    }
-    const stage = active.currentStage;
-    this.chatPreview.update((rows) => [
-      ...rows,
-      {
-        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now()),
-        role: 'user',
-        stage,
-        text,
-      },
-      {
-        id: `a-${Date.now()}`,
-        role: 'assistant',
-        stage,
-        text: 'Entendido. Quando a API estiver ligada, isto seguirá para entrevista e brainstorming.',
-      },
-    ]);
+    this.projects.registerIdea(text);
     this.composer.set('');
   }
 
-  protected goToStage(stage: Stage): void {
-    this.projects.setStageForActiveProject(stage);
+  protected goToNextStage(): void {
+    this.projects.advanceActiveProject();
   }
 }

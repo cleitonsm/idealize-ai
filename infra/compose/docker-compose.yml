@@ -23,6 +23,9 @@ services:
       APP_ENV: local
       CHROMA_HOST: chroma
       CHROMA_PORT: "8000"
+      SQLITE_DATABASE_PATH: /data/idealize-ai.sqlite3
+    volumes:
+      - backend_data:/data
     depends_on:
       - chroma
 
@@ -36,4 +39,5 @@ services:
       - backend
 
 volumes:
+  backend_data: {}
   chroma_data: {}
