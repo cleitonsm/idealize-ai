@@ -164,6 +164,10 @@ def generate_artifact(
         context_text=context_text,
         title_override=data.title,
     )
+    trace_data: dict[str, Any] = {}
+    maybe_trace = getattr(generator, "last_trace", None)
+    if isinstance(maybe_trace, dict):
+        trace_data.update(maybe_trace)
     now = _utc_now()
     artifact = Artifact(
         id=str(uuid.uuid4()),
@@ -176,7 +180,13 @@ def generate_artifact(
         source_context=context_text[:8000] if context_text else None,
         created_at=now,
         updated_at=now,
-        metadata=None,
+        metadata={
+            "trace": trace_data or None,
+            "rag": {
+                "query": " ".join(context_parts)[:2000],
+                "context_chars": len(context_text),
+            },
+        },
     )
     repo.add_artifact(artifact)
     rag.index_text(
@@ -185,7 +195,11 @@ def generate_artifact(
         stage=artifact.stage,
         artifact_type=artifact.type,
         source_role=None,
-        extra_metadata={"artifact_id": artifact.id},
+        extra_metadata={
+            "artifact_id": artifact.id,
+            "trace_prompt_id": trace_data.get("prompt_id", ""),
+            "trace_node": trace_data.get("node", ""),
+        },
     )
     p_now = _utc_now()
     repo.save_project(

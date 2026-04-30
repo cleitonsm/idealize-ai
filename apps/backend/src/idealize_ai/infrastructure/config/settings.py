@@ -7,8 +7,11 @@ class Settings(BaseSettings):
     app_env: str = "local"
     llm_provider: str = ""
     llm_api_key: str = ""
+    llm_model: str = "deterministic-mvp"
+    prompts_dir: str = ""
     chroma_host: str = "localhost"
     chroma_port: int = 8000
+    chroma_collection: str = "idealize-ai-context"
 
 
 def get_settings() -> Settings:

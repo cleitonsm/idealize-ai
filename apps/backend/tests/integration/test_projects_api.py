@@ -1,6 +1,3 @@
-from idealize_contracts import Stage
-
-
 def test_mvp_project_flow(client):  # noqa: ANN001
     r = client.post("/projects", json={"name": "ACME", "description": "Demo"})
     assert r.status_code == 201, r.text
@@ -9,7 +6,10 @@ def test_mvp_project_flow(client):  # noqa: ANN001
     assert project["name"] == "ACME"
     assert project["currentStage"] == "initial_idea"
 
-    r = client.post(f"/projects/{pid}/idea", json={"content": "  Build a thing  "})
+    r = client.post(
+        f"/projects/{pid}/idea",
+        json={"content": "  Build a thing  "},
+    )
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["message"]["content"] == "Build a thing"
@@ -28,6 +28,12 @@ def test_mvp_project_flow(client):  # noqa: ANN001
     assert art["projectId"] == pid
     assert art["type"] == "problem_solution"
     assert "Project:" in art["content"]
+    assert "Prompt Id:" in art["content"]
+    assert art["metadata"]["trace"]["node"] == "node_interview"
+    assert (
+        art["metadata"]["trace"]["prompt_id"] == "interview__problem_solution"
+    )
+    assert art["metadata"]["rag"]["context_chars"] >= 1
 
     r = client.get(f"/projects/{pid}/artifacts")
     assert r.status_code == 200
@@ -46,6 +52,6 @@ def test_project_not_found(client):  # noqa: ANN001
 def test_invalid_stage_transition(client):  # noqa: ANN001
     r = client.post("/projects", json={"name": "X"})
     pid = r.json()["id"]
-    bad = Stage.BRAINSTORMING.value
+    bad = "brainstorming"
     r = client.post(f"/projects/{pid}/advance", json={"targetStage": bad})
     assert r.status_code == 409

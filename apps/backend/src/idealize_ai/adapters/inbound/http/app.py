@@ -4,11 +4,17 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from idealize_ai.adapters.inbound.http.routes import health, projects
-from idealize_ai.adapters.outbound.generation.stub_document_generator import StubDocumentGenerator
+from idealize_ai.adapters.outbound.generation.traceable_document_generator import (
+    TraceableDocumentGenerator,
+)
+from idealize_ai.adapters.outbound.langgraph.langgraph_orchestrator import LangGraphOrchestrator
+from idealize_ai.adapters.outbound.llm.configurable_llm import ConfigurableLlm
 from idealize_ai.adapters.outbound.persistence.in_memory_project_repository import (
     InMemoryProjectRepository,
 )
 from idealize_ai.adapters.outbound.rag.in_memory_rag import InMemoryRag
+from idealize_ai.adapters.outbound.rag_chroma.chroma_rag import ChromaRag
+from idealize_ai.application.prompts import StagePromptRegistry
 from idealize_ai.domain.exceptions import InvalidStageTransitionError, ProjectNotFoundError
 from idealize_ai.infrastructure.config.settings import get_settings
 from idealize_ai.ports.document_generation import DocumentGeneratorPort
@@ -24,9 +30,25 @@ def create_app(
     settings = get_settings()
     app = FastAPI(title="Idealize AI API", version="0.1.0")
 
+    llm = ConfigurableLlm(
+        provider=settings.llm_provider,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model,
+    )
+    orchestrator = LangGraphOrchestrator(llm=llm)
+    prompt_registry = StagePromptRegistry(prompts_dir=settings.prompts_dir or None)
+
     app.state.repository = repository or InMemoryProjectRepository()
-    app.state.rag = rag or InMemoryRag()
-    app.state.document_generator = document_generator or StubDocumentGenerator()
+    app.state.rag = rag or ChromaRag(
+        host=settings.chroma_host,
+        port=settings.chroma_port,
+        collection_name=settings.chroma_collection,
+        fallback=InMemoryRag(),
+    )
+    app.state.document_generator = document_generator or TraceableDocumentGenerator(
+        orchestrator=orchestrator,
+        prompts=prompt_registry,
+    )
 
     app.add_middleware(
         CORSMiddleware,
